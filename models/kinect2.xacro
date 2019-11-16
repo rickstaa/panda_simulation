@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <link name="world"/>
+    <xacro:include filename="$(find common_sensors)/urdf/sensors/kinect2.urdf.xacro"/>
+    <xacro:kinect2 name="kinect2" camera_name="kinect2" parent="world">
+        <origin rpy="0 0.7 3.141593" xyz="1.8 0 0.6"/>
+    </xacro:kinect2>
+</robot>
