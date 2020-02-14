@@ -1,28 +1,51 @@
 <launch>
-    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro"/>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
-    <!-- GAZEBO arguments -->
-    <arg name="paused" default="false"/>
-    <arg name="use_sim_time" default="true"/>
-    <arg name="gui" default="true"/>
-    <arg name="headless" default="false"/>
-    <arg name="debug" default="false"/>
-    <arg name="load_gripper" default="true"/>
+    <!-- Main GAZEBO arguments -->
+    <arg name="paused" default="false" />
+    <arg name="use_sim_time" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="headless" default="false" />
+    <arg name="debug" default="false" />
+    <arg name="load_gripper" default="true" />
+
+    <!-- GAZEBO robot arguments -->
+    <!--- Initial robot position -->
+    <arg name="J1" default="0.0" />
+    <arg name="J2" default="0.0" />
+    <arg name="J3" default="0.0" />
+    <arg name="J4" default="-0.0698" />
+    <arg name="J5" default="0.0" />
+    <arg name="J6" default="-0.0175" />
+    <arg name="J7" default="0.9124" />
+
+    <!-- Set private (internal) launch file arguments -->
+    <arg unless="$(arg paused)" name="_unpause_arg" value="-unpause" />
+    <arg if="$(arg paused)" name="_unpause_arg" value="" />
 
     <!--launch GAZEBO with own world configuration -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <!-- <arg name="world_name" value="$(find robotics_assisted_tomography)/worlds/tomography.world"/> -->
-        <arg name="debug" value="$(arg debug)"/>
-        <arg name="gui" value="$(arg gui)"/>
-        <arg name="paused" value="$(arg paused)"/>
-        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
-        <arg name="headless" value="$(arg headless)"/>
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="true" />
+        <arg name="use_sim_time" value="$(arg use_sim_time)" />
+        <arg name="headless" value="$(arg headless)" />
     </include>
 
-    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda"/>
+    <!-- Spawn panda_robot model
+    NOTE: Unpause needed to set robot position (see https://github.com/ros-simulation/gazebo_ros_pkgs/issues/93)-->
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda
+    -J panda_joint1 $(arg J1)
+    -J panda_joint2 $(arg J2)
+    -J panda_joint3 $(arg J3)
+    -J panda_joint4 $(arg J4)
+    -J panda_joint5 $(arg J5)
+    -J panda_joint6 $(arg J6)
+    -J panda_joint7 $(arg J7) $(arg _unpause_arg)" />
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
-    <rosparam file="$(find panda_simulation)/config/panda_control.yaml" command="load"/>
+    <rosparam file="$(find panda_simulation)/config/panda_control.yaml" command="load" />
 
 
     <!-- load the controllers -->
@@ -34,7 +57,7 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
 
     <include file="$(find panda_moveit_config)/launch/planning_context.launch">
-        <arg name="load_robot_description" value="true"/>
+        <arg name="load_robot_description" value="true" />
         <arg name="load_gripper" value="$(arg load_gripper)" />
     </include>
     <include file="$(find panda_moveit_config)/launch/move_group.launch">
@@ -47,6 +70,6 @@
     <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
 
     <!-- launch robot control node for moveit motion planning -->
-    <node pkg="panda_simulation" type="robot_control_node" name="robot_control_node" output="screen"/>
+    <node pkg="panda_simulation" type="robot_control_node" name="robot_control_node" output="screen" />
 
 </launch>
