@@ -6,11 +6,16 @@
     <param name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
     <!--## ARGUMENTS ##-->
+    <!-- Main arguments -->
+    <arg name="load_robot_state_publisher" default="true" />
+    <arg name="load_controllers" default="true" />
+
     <!-- Main MOVEIT arguments -->
     <arg name="moveit" default="true" />
     <arg name="rviz_file" default="$(find panda_moveit_config)/launch/moveit_empty.rviz" />
 
     <!-- Main GAZEBO arguments -->
+    <arg name="gazebo" default="true" />
     <arg name="paused" default="false" />
     <arg name="use_sim_time" default="true" />
     <arg name="gui" default="true" />
@@ -31,43 +36,51 @@
 
     <!--## GAZEBO NODES ##-->
     <!-- Set private (internal) launch file arguments -->
-    <arg unless="$(arg paused)" name="_unpause_arg" value="-unpause" />
-    <arg if="$(arg paused)" name="_unpause_arg" value="" />
+    <group if="$(arg gazebo)">
+        <arg unless="$(arg paused)" name="_unpause_arg" value="-unpause" />
+        <arg if="$(arg paused)" name="_unpause_arg" value="" />
 
-    <!--launch GAZEBO with own world configuration -->
-    <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(arg world_name)" />
-        <arg name="debug" value="$(arg debug)" />
-        <arg name="gui" value="$(arg gui)" />
-        <arg name="paused" value="true" />
-        <arg name="use_sim_time" value="$(arg use_sim_time)" />
-        <arg name="headless" value="$(arg headless)" />
-    </include>
+        <!--launch GAZEBO with own world configuration -->
+        <include file="$(find gazebo_ros)/launch/empty_world.launch">
+            <arg name="world_name" value="$(arg world_name)" />
+            <arg name="debug" value="$(arg debug)" />
+            <arg name="gui" value="$(arg gui)" />
+            <arg name="paused" value="true" />
+            <arg name="use_sim_time" value="$(arg use_sim_time)" />
+            <arg name="headless" value="$(arg headless)" />
+        </include>
 
-    <!-- Spawn panda_robot model
-    NOTE: Unpause needed to set robot position (see https://github.com/ros-simulation/gazebo_ros_pkgs/issues/93)-->
-    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda
-    -J panda_joint1 $(arg J1)
-    -J panda_joint2 $(arg J2)
-    -J panda_joint3 $(arg J3)
-    -J panda_joint4 $(arg J4)
-    -J panda_joint5 $(arg J5)
-    -J panda_joint6 $(arg J6)
-    -J panda_joint7 $(arg J7) $(arg _unpause_arg)" />
+        <!-- Spawn panda_robot model
+        NOTE: Unpause needed to set robot position (see https://github.com/ros-simulation/gazebo_ros_pkgs/issues/93)-->
+        <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda
+            -J panda_joint1 $(arg J1)
+            -J panda_joint2 $(arg J2)
+            -J panda_joint3 $(arg J3)
+            -J panda_joint4 $(arg J4)
+            -J panda_joint5 $(arg J5)
+            -J panda_joint6 $(arg J6)
+            -J panda_joint7 $(arg J7) $(arg _unpause_arg)" />
+    </group>
 
+    <!--## CONTROLLER NODES ##-->
     <!-- Load joint controller configurations from YAML file to parameter server -->
-    <rosparam file="$(find panda_simulation)/config/panda_control.yaml" command="load" />
+    <group if="$(arg load_controllers)">
+        <rosparam file="$(find panda_simulation)/config/panda_control.yaml" command="load" />
 
-    <!-- load the controllers -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_arm_controller" />
-    <node if="$(arg load_gripper)" name="controller_spawner_hand" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="panda_hand_controller" />
+        <!-- load the controllers -->
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="joint_state_controller panda_arm_controller" />
+        <node if="$(arg load_gripper)" name="controller_spawner_hand" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="panda_hand_controller" />
 
+    </group>
+
+    <!--## ROBOT STATE PUBLISHER ##-->
     <!-- convert joint states to TF transforms for rviz, etc -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+    <node if="$(arg load_robot_state_publisher)" name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
 
     <!--## MOVEIT NODES ##-->
     <!-- Load moveit related nodes -->
-    <group if="$(arg moveit)">        <!-- If moveit argument is true -->
+    <group if="$(arg moveit)">
+        <!-- If moveit argument is true -->
         <include file="$(find panda_moveit_config)/launch/planning_context.launch">
             <arg name="load_robot_description" value="true" />
             <arg name="load_gripper" value="$(arg load_gripper)" />
@@ -77,7 +90,7 @@
         </include>
         <group if="$(arg gui)">
             <include file="$(find panda_moveit_config)/launch/moveit_rviz.launch">
-                <arg name="rviz_file" value="$(arg rviz_file)"/>
+                <arg name="rviz_file" value="$(arg rviz_file)" />
             </include>
         </group>
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
