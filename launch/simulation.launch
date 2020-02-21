@@ -2,8 +2,6 @@
     This launch file launches launches the panda_simulation.
 -->
 <launch>
-    <!-- Load robot description -->
-    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
 
     <!--## ARGUMENTS ##-->
     <!-- Main arguments -->
@@ -23,6 +21,10 @@
     <arg name="debug" default="false" />
     <arg name="load_gripper" default="true" />
     <arg name="world_name" default="worlds/empty.world" />
+
+    <!-- Load robot description -->
+    <param if="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm_hand.urdf.xacro" />
+    <param unless="$(arg load_gripper)" name="robot_description" command="$(find xacro)/xacro --inorder $(find franka_description)/robots/panda_arm.urdf.xacro" />
 
     <!-- GAZEBO robot arguments -->
     <!--- Initial robot position -->
