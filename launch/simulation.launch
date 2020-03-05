@@ -15,7 +15,7 @@
 
     <!-- Main MOVEIT arguments -->
     <arg name="moveit" default="true" />
-    <arg name="moveit_rviz_file" default="$(find panda_moveit_config)/launch/moveit_empty.rviz" />
+    <arg name="moveit_rviz_file" default="$(find panda_moveit_config)/launch/moveit.rviz" />
 
     <!-- Main GAZEBO arguments -->
     <arg name="gazebo" default="true" />
