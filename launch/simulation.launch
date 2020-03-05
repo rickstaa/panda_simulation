@@ -8,15 +8,21 @@
     <arg name="load_robot_state_publisher" default="true" />
     <arg name="load_controllers" default="true" />
 
+    <!-- Allow user to specify if they want an extra gripper center frame -->
+    <arg name="grip_site" default="false" />
+    <arg name="grip_site_xyz" default="0.0 0.0 0.10" />
+    <arg name="grip_site_rpy" default="0.0 0.0 0.0" />
+
     <!-- Main MOVEIT arguments -->
     <arg name="moveit" default="true" />
-    <arg name="rviz_file" default="$(find panda_moveit_config)/launch/moveit_empty.rviz" />
+    <arg name="moveit_rviz_file" default="$(find panda_moveit_config)/launch/moveit_empty.rviz" />
 
     <!-- Main GAZEBO arguments -->
     <arg name="gazebo" default="true" />
+    <arg name="gazebo_gui" default="true" />
     <arg name="paused" default="false" />
     <arg name="use_sim_time" default="true" />
-    <arg name="gui" default="true" />
+    <arg name="rviz" default="true" />
     <arg name="headless" default="false" />
     <arg name="debug" default="false" />
     <arg name="load_gripper" default="true" />
@@ -46,7 +52,7 @@
         <include file="$(find gazebo_ros)/launch/empty_world.launch">
             <arg name="world_name" value="$(arg world_name)" />
             <arg name="debug" value="$(arg debug)" />
-            <arg name="gui" value="$(arg gui)" />
+            <arg name="gui" value="$(arg gazebo_gui)" />
             <arg name="paused" value="true" />
             <arg name="use_sim_time" value="$(arg use_sim_time)" />
             <arg name="headless" value="$(arg headless)" />
@@ -86,13 +92,19 @@
         <include file="$(find panda_moveit_config)/launch/planning_context.launch">
             <arg name="load_robot_description" value="true" />
             <arg name="load_gripper" value="$(arg load_gripper)" />
+            <arg name="grip_site" value="$(arg grip_site)" />
+            <arg name="grip_site_xyz" value="$(arg grip_site_xyz)" />
+            <arg name="grip_site_rpy" value="$(arg grip_site_rpy)" />
         </include>
         <include file="$(find panda_moveit_config)/launch/move_group.launch">
             <arg name="load_gripper" value="$(arg load_gripper)" />
+            <arg name="grip_site" value="$(arg grip_site)" />
+            <arg name="grip_site_xyz" value="$(arg grip_site_xyz)" />
+            <arg name="grip_site_rpy" value="$(arg grip_site_rpy)" />
         </include>
-        <group if="$(arg gui)">
+        <group if="$(arg rviz)">
             <include file="$(find panda_moveit_config)/launch/moveit_rviz.launch">
-                <arg name="rviz_file" value="$(arg rviz_file)" />
+                <arg name="rviz_file" value="$(arg moveit_rviz_file)" />
             </include>
         </group>
         <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
