@@ -41,6 +41,8 @@
     <arg name="J5" default="0.0" />
     <arg name="J6" default="-0.0175" />
     <arg name="J7" default="0.9124" />
+    <arg name="J8" default="0.04" />
+    <arg name="J9" default="0.04" />
 
     <!--## GAZEBO NODES ##-->
     <!-- Set private (internal) launch file arguments -->
@@ -58,6 +60,10 @@
             <arg name="headless" value="$(arg headless)" />
         </include>
 
+        <!-- Create gripper spwan position if load_gripper == True -->
+        <arg if="$(arg load_gripper)" name="_gripper_spawn_arg" value="-J panda_finger_joint1 $(arg J8) -J panda_finger_joint2 $(arg J9)" />
+        <arg unless="$(arg load_gripper)" name="_gripper_spawn_arg" value="" />
+
         <!-- Spawn panda_robot model
         NOTE: Unpause needed to set robot position (see https://github.com/ros-simulation/gazebo_ros_pkgs/issues/93)-->
         <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model panda
@@ -67,7 +73,7 @@
             -J panda_joint4 $(arg J4)
             -J panda_joint5 $(arg J5)
             -J panda_joint6 $(arg J6)
-            -J panda_joint7 $(arg J7) $(arg _unpause_arg)" />
+            -J panda_joint7 $(arg J7) $(arg _gripper_spawn_arg) $(arg _unpause_arg)" />
     </group>
 
     <!--## CONTROLLER NODES ##-->
